@@ -134,6 +134,8 @@ func createAnnotations(issues []result.Issue) []*github.CheckRunAnnotation {
 }
 
 func pushFailures(check *github.CheckRun, failures []result.Issue) {
+	fmt.Printf("Pushing Failures")
+
 	opts := github.UpdateCheckRunOptions{
 		Name:    name,
 		HeadSHA: github.String(headSHA),
@@ -144,9 +146,10 @@ func pushFailures(check *github.CheckRun, failures []result.Issue) {
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
+	fmt.Printf("Updating Check Run")
 	if _, _, err := client.Checks.UpdateCheckRun(
 		ctx, repoOwner, repoName, check.GetID(), opts); err != nil {
 		fmt.Fprintln(os.Stderr, "Error while updating check-run:", err)
@@ -165,6 +168,7 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Printf("Linter found %d errors\n", len(report.Issues))
 	if len(report.Issues) > 0 {
 		concl = conclFailure
 		pushFailures(check, report.Issues)
@@ -175,6 +179,7 @@ func main() {
 		fmt.Println("Successful run")
 	} else {
 		fmt.Printf("Failed run with %d errors\n", len(report.Issues))
+		os.Exit(2)
 	}
 
 	// Always exit with 0, zero means that the Linter run successfully and created separate check,
