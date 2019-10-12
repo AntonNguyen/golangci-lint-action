@@ -91,6 +91,7 @@ func (c conclusion) String() string {
 }
 
 func completeCheck(check *github.CheckRun, concl conclusion, errCount int) {
+	fmt.Println("Completing check\n")
 	opts := github.UpdateCheckRunOptions{
 		Name:       name,
 		HeadSHA:    github.String(headSHA),
@@ -101,7 +102,7 @@ func completeCheck(check *github.CheckRun, concl conclusion, errCount int) {
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	if _, _, err := client.Checks.UpdateCheckRun(
@@ -117,9 +118,11 @@ type Report struct {
 }
 
 func createAnnotations(issues []result.Issue) []*github.CheckRunAnnotation {
+	fmt.Println("Creating annotations for %d issues\n", len(issues))
 	ann := make([]*github.CheckRunAnnotation, len(issues))
 	for i, f := range issues {
 		r := f.GetLineRange()
+		fmt.Println("%s from line %d to %d in %s", f.Text, r.From, r.To, f.Pos.Filename)
 		ann[i] = &github.CheckRunAnnotation{
 			Path:            github.String(f.Pos.Filename),
 			StartLine:       github.Int(r.From),
@@ -134,7 +137,7 @@ func createAnnotations(issues []result.Issue) []*github.CheckRunAnnotation {
 }
 
 func pushFailures(check *github.CheckRun, failures []result.Issue) {
-	fmt.Printf("Pushing Failures")
+	fmt.Printf("Pushing Failures\n")
 
 	opts := github.UpdateCheckRunOptions{
 		Name:    name,
@@ -149,7 +152,7 @@ func pushFailures(check *github.CheckRun, failures []result.Issue) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	fmt.Printf("Updating Check Run")
+	fmt.Printf("Updating Check Run\n")
 	if _, _, err := client.Checks.UpdateCheckRun(
 		ctx, repoOwner, repoName, check.GetID(), opts); err != nil {
 		fmt.Fprintln(os.Stderr, "Error while updating check-run:", err)
@@ -160,10 +163,10 @@ func pushFailures(check *github.CheckRun, failures []result.Issue) {
 func main() {
 	concl := conclSuccess
 
-	fmt.Printf("Creating checks")
+	fmt.Printf("Initializing github checks\n")
 	check := createCheck()
 
-	fmt.Printf("Loading linter report")
+	fmt.Printf("Loading linter report\n")
 	var report Report
 	dec := json.NewDecoder(os.Stdin)
 	if err := dec.Decode(&report); err != nil {
@@ -174,11 +177,13 @@ func main() {
 	if len(report.Issues) > 0 {
 		concl = conclFailure
 		pushFailures(check, report.Issues)
+	} else {
+		completeCheck(check, concl, len(report.Issues))
 	}
-	completeCheck(check, concl, len(report.Issues))
+
 
 	if concl == conclSuccess {
-		fmt.Println("Successful run")
+		fmt.Println("Successful run\n")
 	} else {
 		fmt.Printf("Failed run with %d errors\n", len(report.Issues))
 		os.Exit(2)
