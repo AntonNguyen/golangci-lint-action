@@ -160,8 +160,10 @@ func pushFailures(check *github.CheckRun, failures []result.Issue) {
 func main() {
 	concl := conclSuccess
 
+	fmt.Printf("Creating checks")
 	check := createCheck()
 
+	fmt.Printf("Loading linter report")
 	var report Report
 	dec := json.NewDecoder(os.Stdin)
 	if err := dec.Decode(&report); err != nil {
