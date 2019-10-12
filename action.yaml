@@ -1,6 +1,6 @@
 name: 'GolangCI-Lint Action'
 description: 'Lint your Go code with GolangCI-Lint'
-author: 'Matouš Dzivjak'
+author: 'Anton Nguyen'
 branding:
   icon: 'code'
   color: 'blue'

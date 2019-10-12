@@ -28,14 +28,14 @@ jobs:
           export IMAGE_TAG_MINOR=$(echo ${IMAGE_TAG} | awk '{match($0,"v[0-9]\.[0-9]",a)}END{print a[0]}')
           export IMAGE_TAG_MAJOR=$(echo ${IMAGE_TAG} | awk '{match($0,"v[0-9]",a)}END{print a[0]}')
           docker build \
-          -t matoous/golangci-lint-action \
-          -t matoous/golangci-lint-action:${IMAGE_TAG} \
-          -t matoous/golangci-lint-action:${IMAGE_TAG_MINOR} \
-          -t matoous/golangci-lint-action:${IMAGE_TAG_MAJOR} .
+          -t antonnguyen/golangci-lint-action \
+          -t antonnguyen/golangci-lint-action:${IMAGE_TAG} \
+          -t antonnguyen/golangci-lint-action:${IMAGE_TAG_MINOR} \
+          -t antonnguyen/golangci-lint-action:${IMAGE_TAG_MAJOR} .
 
       - name: Publish image
         if: github.event.action == 'published' # temporary workaround
-        run: docker push matoous/golangci-lint-action
+        run: docker push antonnguyen/golangci-lint-action
 
       - name: Logout
         if: github.event.action == 'published' # temporary workaround
