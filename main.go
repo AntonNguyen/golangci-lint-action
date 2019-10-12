@@ -110,6 +110,7 @@ func completeCheck(check *github.CheckRun, concl conclusion, errCount int) {
 		fmt.Fprintln(os.Stderr, "Error while completing check-run:", err)
 		os.Exit(1)
 	}
+	fmt.Println("Finished completing check\n")
 }
 
 // Report contains the data returned by golangci lint parsed from json
@@ -118,11 +119,13 @@ type Report struct {
 }
 
 func createAnnotations(issues []result.Issue) []*github.CheckRunAnnotation {
-	fmt.Println("Creating annotations for %d issues\n", len(issues))
+	fmt.Printf("Creating annotations for %d issues\n", len(issues))
 	ann := make([]*github.CheckRunAnnotation, len(issues))
+
 	for i, f := range issues {
 		r := f.GetLineRange()
-		fmt.Println("%s from line %d to %d in %s", f.Text, r.From, r.To, f.Pos.Filename)
+
+		fmt.Printf("Issue: %s | Line %d to %d | Filename: %s\n", f.Text, r.From, r.To, f.Pos.Filename)
 		ann[i] = &github.CheckRunAnnotation{
 			Path:            github.String(f.Pos.Filename),
 			StartLine:       github.Int(r.From),
@@ -158,6 +161,7 @@ func pushFailures(check *github.CheckRun, failures []result.Issue) {
 		fmt.Fprintln(os.Stderr, "Error while updating check-run:", err)
 		os.Exit(1)
 	}
+	fmt.Printf("Finished pushing Failures\n")
 }
 
 func main() {
@@ -177,16 +181,13 @@ func main() {
 	if len(report.Issues) > 0 {
 		concl = conclFailure
 		pushFailures(check, report.Issues)
-	} else {
-		completeCheck(check, concl, len(report.Issues))
 	}
-
+	completeCheck(check, concl, len(report.Issues))
 
 	if concl == conclSuccess {
 		fmt.Println("Successful run\n")
 	} else {
 		fmt.Printf("Failed run with %d errors\n", len(report.Issues))
-		os.Exit(2)
 	}
 
 	// Always exit with 0, zero means that the Linter run successfully and created separate check,
